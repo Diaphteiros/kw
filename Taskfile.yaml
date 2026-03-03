@@ -1,12 +1,12 @@
 version: 3
 
-vars:
-  CODE_DIRS: '{{.ROOT_DIR}}/cmd/... {{.ROOT_DIR}}/pkg/...'
-  NAME: 'kw'
-  REPO_NAME: 'https://github.com/Diaphteiros/kw'
-  GENERATE_DOCS_INDEX: "true"
-
 includes:
   shared:
     taskfile: hack/common/Taskfile_root.yaml
     flatten: true
+    vars:
+      CODE_DIRS: '{{.ROOT_DIR}}/cmd/... {{.ROOT_DIR}}/pkg/... {{.ROOT_DIR}}/pluginlib/...'
+      NESTED_MODULES: 'pluginlib'
+      NAME: 'kw'
+      REPO_NAME: 'https://github.com/Diaphteiros/kw'
+      GENERATE_DOCS_INDEX: "true"

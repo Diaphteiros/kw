@@ -26,12 +26,13 @@ func NewWriteBuffer() *WriteBuffer {
 // Flush writes the buffer to the target writer and resets it.
 // If replacements are provided, all occurrences of the first element in each pair are replaced with the second element.
 // In case of an uneven number of replacements, the last replacement is ignored.
-func (w *WriteBuffer) Flush(target io.Writer, replacements ...string) {
+func (w *WriteBuffer) Flush(target io.Writer, replacements ...string) error {
 	for i := 0; i < len(replacements) && i+1 < len(replacements); i += 2 {
 		w.data = bytes.ReplaceAll(w.data, []byte(replacements[i]), []byte(replacements[i+1]))
 	}
-	target.Write(w.data)
+	_, err := target.Write(w.data)
 	w.data = []byte{}
+	return err
 }
 
 func (w *WriteBuffer) FlushToString() string {

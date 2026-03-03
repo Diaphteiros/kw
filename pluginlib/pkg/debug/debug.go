@@ -15,10 +15,10 @@ func Debug(format string, values ...any) {
 		sb := strings.Builder{}
 		sb.WriteString("\033[37m") // gray color
 		sb.WriteString("DEBUG: ")
-		sb.WriteString(fmt.Sprintf(format, values...))
+		fmt.Fprintf(&sb, format, values...)
 		sb.WriteString("\033[0m") // reset color
 		str := sb.String()
-		if !strings.HasSuffix(sb.String(), "\n") {
+		if !strings.HasSuffix(str, "\n") {
 			str += "\n"
 		}
 		fmt.Fprint(os.Stderr, str)

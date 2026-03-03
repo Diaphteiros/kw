@@ -25,8 +25,8 @@ func LoadTypedState[T any](genericStatePath, pluginStatePath, expectedPluginName
 	if ts.State == nil {
 		return nil, nil
 	}
-	if expectedPluginName != "" && (ts.State.GenericState.LastUsed == nil || ts.State.GenericState.LastUsed.Plugin != expectedPluginName) {
-		return nil, errors.NewStateFromAnotherPluginError(expectedPluginName, ts.State.GenericState.LastUsed.Plugin)
+	if expectedPluginName != "" && (ts.LastUsed == nil || ts.LastUsed.Plugin != expectedPluginName) {
+		return nil, errors.NewStateFromAnotherPluginError(expectedPluginName, ts.LastUsed.Plugin)
 	}
 	if len(ts.RawPluginState) > 0 {
 		err = yaml.Unmarshal(ts.RawPluginState, &ts.PluginState)

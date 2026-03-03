@@ -5,7 +5,7 @@ import "fmt"
 // Requirements is a helper struct for object methods which require other methods to have been called before.
 type Requirements map[string]*Requirement
 
-// NewRequirements retuns a new Requirements object.
+// NewRequirements returns a new Requirements object.
 func NewRequirements() Requirements {
 	return map[string]*Requirement{}
 }
@@ -21,7 +21,7 @@ func (r *Requirement) IsSatisfied() bool {
 	return r.satisfied
 }
 
-// Register registers a new requirement. It takes an identifer and a function which, when called, will satisfy the requirement.
+// Register registers a new requirement. It takes an identifier and a function which, when called, will satisfy the requirement.
 func (rs Requirements) Register(id string, satisfy func() error) {
 	rs[id] = &Requirement{Satisfy: satisfy}
 }
