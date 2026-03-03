@@ -35,12 +35,9 @@ It is strongly discouraged to modify the kubeconfig that is managed by this tool
 * [kw bookmark](kw_bookmark.md)	 - Interact with the kubeconfig bookmarks
 * [kw config](kw_config.md)	 - Interact with the kubeswitcher configuration
 * [kw custom](kw_custom.md)	 - Switch to the kubeconfig at the specified path
-* [kw echo](kw_echo.md)	 - Passes all arguments to 'echo'
 * [kw flip](kw_flip.md)	 - Flip the current configuration with the previously used one
-* [kw garden](kw_garden.md)	 - Wrapper around gardenctl
 * [kw history](kw_history.md)	 - Interact with the history
 * [kw info](kw_info.md)	 - Shows information about the current configuration
-* [kw kind](kw_kind.md)	 - Switch to a kind cluster
 * [kw kubectl-env](kw_kubectl-env.md)	 - Generate a script that points the KUBECONFIG env var to the kubeconfig for the current kw session
 * [kw namespace](kw_namespace.md)	 - Change the default namespace in the current context of the kubeconfig
 * [kw prompt](kw_prompt.md)	 - Generate a script that generates a prompt to display in the shell

@@ -51,7 +51,12 @@ var (
 	skipStateHandlingGroups     = sets.New("", cmdgroups.Config, cmdgroups.Meta)
 )
 
-func NewKubeswitcherCommand() *cobra.Command {
+func NewKubeswitcherCommand(opts ...KubeswitcherCommandOption) *cobra.Command {
+	options := &KubeswitcherCommandOptions{}
+	for _, opt := range opts {
+		opt.Apply(options)
+	}
+
 	res := &cobra.Command{
 		Use:   "kw <command>",
 		Short: "Quickly switch between multiple Kubernetes clusters",
@@ -101,36 +106,16 @@ It is strongly discouraged to modify the kubeconfig that is managed by this tool
 	res.SetIn(os.Stdin)
 
 	// add plugin commands
-	if len(config.Runtime.Config().Plugins) > 0 {
+	if !options.pluginsDisabled && len(config.Runtime.Config().Plugins) > 0 {
 		res.AddGroup(&cobra.Group{ID: cmdgroups.Plugin, Title: "Plugin Commands:"})
 		for _, pc := range config.Runtime.Config().Plugins {
 			res.AddCommand(commandFromPluginConfig(pc))
 		}
 	}
 
-	return res
-}
-
-var RootCmd *cobra.Command
-
-func init() {
-	cobra.EnableTraverseRunHooks = true
-
-	// fill config variables for validation
-	config.BuiltinSubcommands = sets.Set[string]{}
-	config.BuiltinAliases = map[string]string{}
-	for _, sc := range builtinSubcommands {
-		scName := sc.Name()
-		config.BuiltinSubcommands.Insert(scName)
-		for _, alias := range sc.Aliases {
-			config.BuiltinAliases[alias] = scName
-		}
-	}
-
-	RootCmd = NewKubeswitcherCommand()
-	RootCmd.DisableAutoGenTag = true
-	oldPersistentPreRun := RootCmd.PersistentPreRun
-	RootCmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
+	res.DisableAutoGenTag = true
+	oldPersistentPreRun := res.PersistentPreRun
+	res.PersistentPreRun = func(cmd *cobra.Command, args []string) {
 		// print session dir and config as debug info
 		debug.Debug("Session dir: %s\n", config.Runtime.SessionDir())
 		debug.Debug("Config: \n%s\n", config.Runtime.Config().String())
@@ -165,8 +150,8 @@ func init() {
 
 		oldPersistentPreRun(cmd, args)
 	}
-	oldPersistentPostRun := RootCmd.PersistentPostRun
-	RootCmd.PersistentPostRun = func(cmd *cobra.Command, args []string) {
+	oldPersistentPostRun := res.PersistentPostRun
+	res.PersistentPostRun = func(cmd *cobra.Command, args []string) {
 		oldPersistentPostRun(cmd, args)
 		cmdGroupID := getCmdGroup(cmd)
 
@@ -270,7 +255,28 @@ func init() {
 	// flags
 	// persistent flags have to be parsed manually, since flag parsing has to be disabled for plugin subcommands
 	// so this is just for the help message
-	RootCmd.PersistentFlags().BoolVar(&debug.PrintDebugStatements, "debug", false, "Print debug information to stderr.")
+	res.PersistentFlags().BoolVar(&debug.PrintDebugStatements, "debug", false, "Print debug information to stderr.")
+
+	return res
+}
+
+var RootCmd *cobra.Command
+
+func init() {
+	cobra.EnableTraverseRunHooks = true
+
+	// fill config variables for validation
+	config.BuiltinSubcommands = sets.Set[string]{}
+	config.BuiltinAliases = map[string]string{}
+	for _, sc := range builtinSubcommands {
+		scName := sc.Name()
+		config.BuiltinSubcommands.Insert(scName)
+		for _, alias := range sc.Aliases {
+			config.BuiltinAliases[alias] = scName
+		}
+	}
+
+	RootCmd = NewKubeswitcherCommand()
 }
 
 // // addPersistentPreRunFunctionToCommand additively adds one or more functions to the PersistentPreRun field of a command.
@@ -413,4 +419,20 @@ func getCmdGroup(cmd *cobra.Command) string {
 		return getCmdGroup(cmd.Parent())
 	}
 	return ""
+}
+
+type KubeswitcherCommandOptions struct {
+	pluginsDisabled bool
+}
+
+type KubeswitcherCommandOption interface {
+	Apply(*KubeswitcherCommandOptions)
+}
+
+type DisablePlugins struct{}
+
+var _ KubeswitcherCommandOption = DisablePlugins{}
+
+func (DisablePlugins) Apply(opts *KubeswitcherCommandOptions) {
+	opts.pluginsDisabled = true
 }
