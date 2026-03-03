@@ -1,11 +1,11 @@
 module github.com/Diaphteiros/kw
 
-go 1.25.0
+go 1.25.7
 
 replace github.com/Diaphteiros/kw/pluginlib => ./pluginlib
 
 require (
-	github.com/Diaphteiros/kw/pluginlib v0.6.0
+	github.com/Diaphteiros/kw/pluginlib v0.0.0-20260303133311-34c718da530f
 	github.com/atotto/clipboard v0.1.4
 	github.com/ktr0731/go-fuzzyfinder v0.9.0
 	github.com/mandelsoft/vfs v0.4.4

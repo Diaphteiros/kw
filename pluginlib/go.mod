@@ -1,6 +1,6 @@
 module github.com/Diaphteiros/kw/pluginlib
 
-go 1.25
+go 1.25.7
 
 require (
 	github.com/ktr0731/go-fuzzyfinder v0.9.0
