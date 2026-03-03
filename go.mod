@@ -7,7 +7,6 @@ replace github.com/Diaphteiros/kw/pluginlib => ./pluginlib
 require (
 	github.com/Diaphteiros/kw/pluginlib v0.0.0-20260303133311-34c718da530f
 	github.com/atotto/clipboard v0.1.4
-	github.com/ktr0731/go-fuzzyfinder v0.9.0
 	github.com/mandelsoft/vfs v0.4.4
 	github.com/spf13/cobra v1.10.1
 	k8s.io/api v0.35.0
@@ -30,6 +29,7 @@ require (
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/ktr0731/go-ansisgr v0.1.0 // indirect
+	github.com/ktr0731/go-fuzzyfinder v0.9.0 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mandelsoft/filepath v0.0.0-20240223090642-3e2777258aa3 // indirect
