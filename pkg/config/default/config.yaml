@@ -1,0 +1,4 @@
+kubeswitcher:
+  printInfoOnKubeconfigChange: true
+  printChangeInfoToStderr: false
+  historyDepth: 5
