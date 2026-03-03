@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/mandelsoft/vfs/pkg/vfs"
+
 	"github.com/Diaphteiros/kw/pluginlib/pkg/fs"
 )
 

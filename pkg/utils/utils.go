@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/mandelsoft/vfs/pkg/vfs"
+
 	"github.com/Diaphteiros/kw/pkg/config"
 	"github.com/Diaphteiros/kw/pluginlib/pkg/fs"
 	libutils "github.com/Diaphteiros/kw/pluginlib/pkg/utils"

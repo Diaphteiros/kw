@@ -3,6 +3,7 @@ package basic
 import (
 	"github.com/atotto/clipboard"
 	"github.com/spf13/cobra"
+
 	"github.com/Diaphteiros/kw/pkg/cmdgroups"
 	"github.com/Diaphteiros/kw/pkg/config"
 

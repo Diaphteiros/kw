@@ -2,6 +2,7 @@ package storage
 
 import (
 	"github.com/spf13/cobra"
+
 	"github.com/Diaphteiros/kw/cmd/meta/bookmark"
 )
 

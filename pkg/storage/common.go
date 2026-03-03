@@ -7,10 +7,11 @@ import (
 	"strconv"
 
 	"github.com/mandelsoft/vfs/pkg/vfs"
+	"k8s.io/apimachinery/pkg/util/sets"
+
 	"github.com/Diaphteiros/kw/pkg/config"
 	"github.com/Diaphteiros/kw/pluginlib/pkg/debug"
 	"github.com/Diaphteiros/kw/pluginlib/pkg/fs"
-	"k8s.io/apimachinery/pkg/util/sets"
 )
 
 const (

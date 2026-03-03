@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/mandelsoft/vfs/pkg/vfs"
+
 	"github.com/Diaphteiros/kw/pkg/config"
 	"github.com/Diaphteiros/kw/pkg/utils"
 	"github.com/Diaphteiros/kw/pluginlib/pkg/debug"

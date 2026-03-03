@@ -12,8 +12,10 @@ go install github.com/Diaphteiros/kw@latest
 ```
 or clone the repository and run
 ```shell
-make install
+task install
 ```
+
+This repository uses [task](https://taskfile.dev/) instead of `make`.
 
 ### The 'KUBECONFIG' Env Var
 

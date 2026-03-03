@@ -4,10 +4,12 @@ import (
 	"encoding/json"
 
 	"github.com/spf13/cobra"
+
 	staticversion "github.com/Diaphteiros/kw/pkg/version"
 
-	libutils "github.com/Diaphteiros/kw/pluginlib/pkg/utils"
 	"sigs.k8s.io/yaml"
+
+	libutils "github.com/Diaphteiros/kw/pluginlib/pkg/utils"
 )
 
 // variables for holding the flags

@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra/doc"
+
 	"github.com/Diaphteiros/kw/cmd"
 )
 

@@ -2,6 +2,7 @@ package meta
 
 import (
 	"github.com/spf13/cobra"
+
 	"github.com/Diaphteiros/kw/cmd/meta/history"
 	"github.com/Diaphteiros/kw/pkg/cmdgroups"
 )

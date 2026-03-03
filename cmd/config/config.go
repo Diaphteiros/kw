@@ -2,6 +2,7 @@ package config
 
 import (
 	"github.com/spf13/cobra"
+
 	configsubcommands "github.com/Diaphteiros/kw/cmd/config/config"
 	"github.com/Diaphteiros/kw/pkg/cmdgroups"
 )

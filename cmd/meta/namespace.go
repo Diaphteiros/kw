@@ -6,9 +6,10 @@ import (
 
 	"github.com/mandelsoft/vfs/pkg/vfs"
 	"github.com/spf13/cobra"
+	corev1 "k8s.io/api/core/v1"
+
 	"github.com/Diaphteiros/kw/pkg/cmdgroups"
 	"github.com/Diaphteiros/kw/pkg/config"
-	corev1 "k8s.io/api/core/v1"
 
 	"github.com/Diaphteiros/kw/pluginlib/pkg/fs"
 	"github.com/Diaphteiros/kw/pluginlib/pkg/selector"

@@ -4,10 +4,11 @@ import (
 	"fmt"
 
 	"github.com/mandelsoft/vfs/pkg/vfs"
-	"github.com/Diaphteiros/kw/pluginlib/pkg/fs"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/Diaphteiros/kw/pluginlib/pkg/fs"
 )
 
 // ParseKubeconfigFromFile reads the given file and parses it as kubeconfig.

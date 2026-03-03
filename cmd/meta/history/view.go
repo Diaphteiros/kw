@@ -5,9 +5,10 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"sigs.k8s.io/yaml"
+
 	"github.com/Diaphteiros/kw/pkg/config"
 	"github.com/Diaphteiros/kw/pkg/storage"
-	"sigs.k8s.io/yaml"
 
 	libutils "github.com/Diaphteiros/kw/pluginlib/pkg/utils"
 )

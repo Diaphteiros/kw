@@ -4,6 +4,7 @@ import (
 	"path/filepath"
 
 	"github.com/spf13/cobra"
+
 	"github.com/Diaphteiros/kw/pkg/config"
 )
 

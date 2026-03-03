@@ -5,12 +5,14 @@ import (
 
 	"github.com/mandelsoft/vfs/pkg/vfs"
 	"github.com/spf13/cobra"
+
 	"github.com/Diaphteiros/kw/pkg/cmdgroups"
 	"github.com/Diaphteiros/kw/pkg/config"
 
+	"sigs.k8s.io/yaml"
+
 	"github.com/Diaphteiros/kw/pluginlib/pkg/fs"
 	libutils "github.com/Diaphteiros/kw/pluginlib/pkg/utils"
-	"sigs.k8s.io/yaml"
 )
 
 var output libutils.OutputFormat

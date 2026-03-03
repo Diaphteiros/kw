@@ -12,6 +12,8 @@ import (
 
 	"github.com/mandelsoft/vfs/pkg/vfs"
 	"github.com/spf13/cobra"
+	"k8s.io/apimachinery/pkg/util/sets"
+
 	basiccmd "github.com/Diaphteiros/kw/cmd/basic"
 	configcmd "github.com/Diaphteiros/kw/cmd/config"
 	metacmd "github.com/Diaphteiros/kw/cmd/meta"
@@ -20,7 +22,6 @@ import (
 	"github.com/Diaphteiros/kw/pkg/cmdgroups"
 	"github.com/Diaphteiros/kw/pkg/config"
 	"github.com/Diaphteiros/kw/pkg/storage"
-	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/Diaphteiros/kw/pluginlib/pkg/debug"
 	"github.com/Diaphteiros/kw/pluginlib/pkg/fs"

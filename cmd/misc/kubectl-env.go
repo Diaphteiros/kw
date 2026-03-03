@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+
 	"github.com/Diaphteiros/kw/pkg/config"
 
 	libutils "github.com/Diaphteiros/kw/pluginlib/pkg/utils"

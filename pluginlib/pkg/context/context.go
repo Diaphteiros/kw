@@ -7,9 +7,10 @@ import (
 	"strings"
 
 	"github.com/mandelsoft/vfs/pkg/vfs"
+	"sigs.k8s.io/yaml"
+
 	"github.com/Diaphteiros/kw/pluginlib/pkg/debug"
 	"github.com/Diaphteiros/kw/pluginlib/pkg/fs"
-	"sigs.k8s.io/yaml"
 )
 
 var con *Context

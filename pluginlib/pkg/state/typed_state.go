@@ -3,8 +3,9 @@ package state
 import (
 	"fmt"
 
-	"github.com/Diaphteiros/kw/pluginlib/pkg/errors"
 	"sigs.k8s.io/yaml"
+
+	"github.com/Diaphteiros/kw/pluginlib/pkg/errors"
 )
 
 type TypedState[T any] struct {

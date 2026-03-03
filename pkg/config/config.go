@@ -6,11 +6,12 @@ import (
 	"fmt"
 	"path/filepath"
 
-	libconfig "github.com/Diaphteiros/kw/pluginlib/pkg/config"
-	libutils "github.com/Diaphteiros/kw/pluginlib/pkg/utils"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/yaml"
+
+	libconfig "github.com/Diaphteiros/kw/pluginlib/pkg/config"
+	libutils "github.com/Diaphteiros/kw/pluginlib/pkg/utils"
 )
 
 var (
