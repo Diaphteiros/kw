@@ -115,6 +115,6 @@ jobs:
           task release:set-version --verbose -- "${{ env.version }}-dev"
           git config user.name "${{ env.AUTHOR_NAME }}"
           git config user.email "${{ env.AUTHOR_EMAIL }}"
-          git add VERSION
-          git commit -m "chore(release): Update VERSION to ${{ env.version }}-dev"
+          git add pkg/version
+          git commit -m "chore(release): Update version to ${{ env.version }}-dev"
           git push origin main
