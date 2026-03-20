@@ -25,8 +25,11 @@ const (
 	// Name of the env var containing the path to the internal call file.
 	ENV_VAR_INTERNAL_CALL_PATH = "KUBESWITCHER_INTERNAL_CALL_PATH"
 
-	// Name of the env var containing the path to the internal callback file.
-	ENV_VAR_INTERNAL_CALLBACK_PATH = "KUBESWITCHER_INTERNAL_CALLBACK_PATH"
+	// Name of the env var containing the path to the internal callback request file.
+	ENV_VAR_INTERNAL_CALLBACK_REQUEST_PATH = "KUBESWITCHER_INTERNAL_CALLBACK_REQUEST_PATH"
+
+	// Name of the env var containing the path to the internal callback state file.
+	ENV_VAR_INTERNAL_CALLBACK_STATE_PATH = "KUBESWITCHER_INTERNAL_CALLBACK_STATE_PATH"
 
 	// Name of the env var containing the statically defined plugin configuration.
 	ENV_VAR_PLUGIN_CONFIG = "KUBESWITCHER_PLUGIN_CONFIG"

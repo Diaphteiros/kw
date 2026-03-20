@@ -73,16 +73,22 @@ The plugin binary will get the following env vars:
   - Internal calls can cause further internal calls.
   - Note that, because plugin subcommand names are configurable, in order for plugin A to call plugin B, the subcommand name for B has to be part of A's configuration.
     - The built-in subcommands are named `<internal_X>`, where `X` is the subcommand.
-- `KUBESWITCHER_INTERNAL_CALLBACK_PATH`
-  - Path to the file for a callback after the internal call.
+- `KUBESWITCHER_INTERNAL_CALLBACK_REQUEST_PATH`
+  - Path to the file to request a callback after the internal call.
     - MAY be written.
-    - MAY be read.
+    - MUST NOT be read (doesn't exist when the plugin is called).
   - Some commands that wrap other commands might be fine with just calling that other command, while others want to react on the command's result or modify the kubeswitcher state afterwards. For the latter case, a callback can be requested.
     - If a command requests an internal call and also creates a file with arbitrary content at this path, it will be called again after the internal call has been resolved.
+      - During the callback, the information that was written to this path can be retrieved from `KUBESWITCHER_INTERNAL_CALLBACK_STATE_PATH`.
+    - The command can use this file to store arbitrary information that it might need to resolve the later callback.
+- `KUBESWITCHER_INTERNAL_CALLBACK_STATE_PATH`
+  - Path to the file for a callback after the internal call.
+    - MUST NOT be written.
+    - MUST be read, but only if the command makes use of internal calls with callbacks. Can be ignored otherwise.
+  - If a command requested an internal call and also created a file with arbitrary content at `KUBESWITCHER_INTERNAL_CALLBACK_REQUEST_PATH`, it will be called again after the internal call has been resolved, with the same content being available at this path.
     - This means that these commands have to differentiate between two cases:
       - Called and no file exists at this path: Regular command call.
       - Called and the file exists: Callback after an internal call.
-    - The command can use this file to store arbitrary information that it might need to resolve the later callback.
 - `KUBESWITCHER_PLUGIN_CONFIG`
   - Contains the static plugin config as JSON, if specified. Is unset otherwise.
 - `KUBESWITCHER_SESSION_ID`

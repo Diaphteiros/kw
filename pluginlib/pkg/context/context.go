@@ -33,8 +33,10 @@ type Context struct {
 	IdPath string `json:"idPath"`
 	// path to the internal call file
 	InternalCallPath string `json:"internalCallPath"`
-	// path to the internal callback file
-	InternalCallbackPath string `json:"internalCallbackPath"`
+	// path to the internal callback request file
+	InternalCallbackRequestPath string `json:"internalCallbackRequestPath"`
+	// path to the internal callback state file
+	InternalCallbackStatePath string `json:"internalCallbackStatePath"`
 	// statically defined plugin configuration (or empty)
 	PluginConfig string `json:"pluginConfig"`
 	// current session id
@@ -54,21 +56,22 @@ func GetContext() *Context {
 // NewContext creates a new context object from the given parameters.
 // Plugins will more likely want to call NewContextFromEnv() instead.
 // Note that this overwrites the current context and should only be called if GetContext() returns nil.
-func NewContext(kubectlBinary, kubeconfigPath, currentPluginName, genericStatePath, pluginStatePath, notificationMessagePath, idPath, internalCallPath, internalCallbackPath, pluginConfig, sessionID, sessionConfigDir, configDir string) *Context {
+func NewContext(kubectlBinary, kubeconfigPath, currentPluginName, genericStatePath, pluginStatePath, notificationMessagePath, idPath, internalCallPath, internalCallbackRequestPath, internalCallbackStatePath, pluginConfig, sessionID, sessionConfigDir, configDir string) *Context {
 	con = &Context{
-		KubectlBinary:           kubectlBinary,
-		KubeconfigPath:          kubeconfigPath,
-		CurrentPluginName:       currentPluginName,
-		GenericStatePath:        genericStatePath,
-		PluginStatePath:         pluginStatePath,
-		NotificationMessagePath: notificationMessagePath,
-		IdPath:                  idPath,
-		InternalCallPath:        internalCallPath,
-		InternalCallbackPath:    internalCallbackPath,
-		PluginConfig:            pluginConfig,
-		SessionID:               sessionID,
-		SessionConfigDir:        sessionConfigDir,
-		ConfigDir:               configDir,
+		KubectlBinary:               kubectlBinary,
+		KubeconfigPath:              kubeconfigPath,
+		CurrentPluginName:           currentPluginName,
+		GenericStatePath:            genericStatePath,
+		PluginStatePath:             pluginStatePath,
+		NotificationMessagePath:     notificationMessagePath,
+		IdPath:                      idPath,
+		InternalCallPath:            internalCallPath,
+		InternalCallbackRequestPath: internalCallbackRequestPath,
+		InternalCallbackStatePath:   internalCallbackStatePath,
+		PluginConfig:                pluginConfig,
+		SessionID:                   sessionID,
+		SessionConfigDir:            sessionConfigDir,
+		ConfigDir:                   configDir,
 	}
 	return con
 }
@@ -113,9 +116,13 @@ func NewContextFromEnv() (*Context, error) {
 	if !ok {
 		return nil, fmt.Errorf(missingEnvVarError, ENV_VAR_INTERNAL_CALL_PATH)
 	}
-	con.InternalCallbackPath, ok = os.LookupEnv(ENV_VAR_INTERNAL_CALLBACK_PATH)
+	con.InternalCallbackRequestPath, ok = os.LookupEnv(ENV_VAR_INTERNAL_CALLBACK_REQUEST_PATH)
 	if !ok {
-		return nil, fmt.Errorf(missingEnvVarError, ENV_VAR_INTERNAL_CALL_PATH)
+		return nil, fmt.Errorf(missingEnvVarError, ENV_VAR_INTERNAL_CALLBACK_REQUEST_PATH)
+	}
+	con.InternalCallbackStatePath, ok = os.LookupEnv(ENV_VAR_INTERNAL_CALLBACK_STATE_PATH)
+	if !ok {
+		return nil, fmt.Errorf(missingEnvVarError, ENV_VAR_INTERNAL_CALLBACK_STATE_PATH)
 	}
 	con.PluginConfig = os.Getenv(ENV_VAR_PLUGIN_CONFIG) // plugin config is optional
 	con.SessionID, ok = os.LookupEnv(ENV_VAR_SESSION_ID)
@@ -139,21 +146,22 @@ func NewContextFromEnv() (*Context, error) {
 
 // EnvFromContext generates a map of environment variables from the context.
 // Plugin name and config are injected, since they are usually not set when this is called.
-func (con *Context) EnvFromContext(pluginName string, pluginConfig []byte, internalCallbackPath string) map[string]string {
+func (con *Context) EnvFromContext(pluginName string, pluginConfig []byte, internalCallbackRequestPath, internalCallbackStatePath string) map[string]string {
 	env := map[string]string{
-		ENV_VAR_KUBECTL_PATH:              con.KubectlBinary,
-		ENV_VAR_KUBECONFIG_PATH:           con.KubeconfigPath,
-		ENV_VAR_CURRENT_PLUGIN_NAME:       pluginName,
-		ENV_VAR_GENERIC_STATE_PATH:        con.GenericStatePath,
-		ENV_VAR_PLUGIN_STATE_PATH:         con.PluginStatePath,
-		ENV_VAR_NOTIFICATION_MESSAGE_PATH: con.NotificationMessagePath,
-		ENV_VAR_ID_PATH:                   con.IdPath,
-		ENV_VAR_INTERNAL_CALL_PATH:        con.InternalCallPath,
-		ENV_VAR_INTERNAL_CALLBACK_PATH:    internalCallbackPath,
-		ENV_VAR_SESSION_ID:                con.SessionID,
-		ENV_VAR_SESSION_CONFIG_DIR:        con.SessionConfigDir,
-		ENV_VAR_CONFIG_DIR:                con.ConfigDir,
-		ENV_VAR_DEBUG:                     fmt.Sprintf("%t", os.Getenv(ENV_VAR_DEBUG) == "true" || debug.PrintDebugStatements),
+		ENV_VAR_KUBECTL_PATH:                   con.KubectlBinary,
+		ENV_VAR_KUBECONFIG_PATH:                con.KubeconfigPath,
+		ENV_VAR_CURRENT_PLUGIN_NAME:            pluginName,
+		ENV_VAR_GENERIC_STATE_PATH:             con.GenericStatePath,
+		ENV_VAR_PLUGIN_STATE_PATH:              con.PluginStatePath,
+		ENV_VAR_NOTIFICATION_MESSAGE_PATH:      con.NotificationMessagePath,
+		ENV_VAR_ID_PATH:                        con.IdPath,
+		ENV_VAR_INTERNAL_CALL_PATH:             con.InternalCallPath,
+		ENV_VAR_INTERNAL_CALLBACK_REQUEST_PATH: internalCallbackRequestPath,
+		ENV_VAR_INTERNAL_CALLBACK_STATE_PATH:   internalCallbackStatePath,
+		ENV_VAR_SESSION_ID:                     con.SessionID,
+		ENV_VAR_SESSION_CONFIG_DIR:             con.SessionConfigDir,
+		ENV_VAR_CONFIG_DIR:                     con.ConfigDir,
+		ENV_VAR_DEBUG:                          fmt.Sprintf("%t", os.Getenv(ENV_VAR_DEBUG) == "true" || debug.PrintDebugStatements),
 	}
 	if pluginConfig != nil {
 		env[ENV_VAR_PLUGIN_CONFIG] = string(pluginConfig)
@@ -214,7 +222,7 @@ func (con *Context) WriteKubeconfigSymlink(kcfgPath, message string, args ...any
 // The additional args are passed into fmt.Sprintf with the message for formatting.
 // Note that this function is usually called by WriteKubeconfig (or WriteKubeconfigSymlink) and does not need to be called manually.
 func (con *Context) WriteNotificationMessage(message string, args ...any) error {
-	debug.Debug("Writing notification message to %s\n", con.NotificationMessagePath)
+	debug.Debug("Writing notification message to %s: %s", con.NotificationMessagePath, message)
 	if len(args) > 0 {
 		message = fmt.Sprintf(message, args...)
 	}
@@ -259,7 +267,7 @@ func (con *Context) WritePluginState(ps any) error {
 // All newlines are removed from the string.
 func (con *Context) WriteId(id string, args ...any) error {
 	// write the id
-	debug.Debug("Writing id to %s\n", con.IdPath)
+	debug.Debug("Writing id to %s: %s", con.IdPath, id)
 	if len(args) > 0 {
 		id = fmt.Sprintf(id, args...)
 	}
@@ -285,12 +293,27 @@ func (con *Context) WriteInternalCall(call string, callback []byte) error {
 	if callback == nil {
 		debug.Debug("No internal callback to write\n")
 	} else {
-		debug.Debug("Writing internal callback to %s\n", con.InternalCallbackPath)
-		err = vfs.WriteFile(fs.FS, con.InternalCallbackPath, callback, os.ModePerm)
+		debug.Debug("Writing internal callback to %s\n", con.InternalCallbackRequestPath)
+		err = vfs.WriteFile(fs.FS, con.InternalCallbackRequestPath, callback, os.ModePerm)
 		if err != nil {
 			return fmt.Errorf("unable to write internal callback: %w", err)
 		}
 	}
 
 	return nil
+}
+
+// ReadInternalCallbackState reads the internal callback state file, if it exists, and returns its content as a byte slice.
+// If the file does not exist, it returns nil without an error.
+func (con *Context) ReadInternalCallbackState() ([]byte, error) {
+	debug.Debug("Reading internal callback state from %s\n", con.InternalCallbackStatePath)
+	data, err := vfs.ReadFile(fs.FS, con.InternalCallbackStatePath)
+	if err != nil {
+		if vfs.IsNotExist(err) {
+			debug.Debug("No internal callback state file found.\n")
+			return nil, nil
+		}
+		return nil, fmt.Errorf("unable to read internal callback state: %w", err)
+	}
+	return data, nil
 }
