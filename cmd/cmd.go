@@ -31,7 +31,6 @@ import (
 
 var (
 	pluginStateLastModified time.Time
-	internalCallStack       = []string{}
 	builtinSubcommands      = []*cobra.Command{
 		basiccmd.TemporaryCmd,
 		basiccmd.CustomCmd,
@@ -78,19 +77,6 @@ The 'kubectl-env' subcommand can help with setting the KUBECONFIG environment va
 Using the tool with a different KUBECONFIG path than the one it manages is not recommended and might lead to unexpected behavior.
 It is strongly discouraged to modify the kubeconfig that is managed by this tool by any other means than this tool itself.
 `,
-		PersistentPreRun: func(cmd *cobra.Command, args []string) {
-			internalCallStackPush(fmt.Sprintf("%s %s", cmd.Name(), strings.Join(args, " ")))
-			debug.Debug("--- plugin start ---\n")
-		},
-		PersistentPostRun: func(cmd *cobra.Command, args []string) {
-			debug.Debug("--- plugin end ---\n")
-			debug.Debug("--- internal calls start ---\n")
-			if err := handleInternalCall(config.Runtime.InternalCallPath()); err != nil {
-				libutils.Fatal(1, "error handling internal call: %w\n", err)
-			}
-			debug.Debug("--- internal calls end ---\n")
-			internalCallStackPop()
-		},
 	}
 
 	res.AddGroup(&cobra.Group{ID: cmdgroups.Basic, Title: "Basic Commands:"})
@@ -114,7 +100,6 @@ It is strongly discouraged to modify the kubeconfig that is managed by this tool
 	}
 
 	res.DisableAutoGenTag = true
-	oldPersistentPreRun := res.PersistentPreRun
 	res.PersistentPreRun = func(cmd *cobra.Command, args []string) {
 		// print session dir and config as debug info
 		debug.Debug("Session dir: %s\n", config.Runtime.SessionDir())
@@ -148,13 +133,103 @@ It is strongly discouraged to modify the kubeconfig that is managed by this tool
 			}
 		}
 
-		oldPersistentPreRun(cmd, args)
+		t, idx := internalCallStack.Peek()
+		if t == nil {
+			// this should only happen during the initial call
+			debug.Debug("Adding initial call to internal call stack")
+			t, idx = internalCallStack.Push(newTask(fmt.Sprintf("%s %s", cmd.Name(), strings.Join(args, " "))))
+		}
+		expectedCommand := fmt.Sprintf("%s %s", cmd.Name(), strings.Join(args, " "))
+		if t.CommandArgs != expectedCommand {
+			libutils.Fatal(1, "internal error: command at index %d on internal call stack doesn't match the currently executed command\nExpected: '%s'\nActual: '%s'\n", idx, expectedCommand, t.CommandArgs)
+		}
+		msgString := fmt.Sprintf("=== Executing call (index: %d): %s ===", idx, t.CommandArgs)
+		msgSeparator := strings.Repeat("=", len(msgString))
+		debug.Debug("\n%s\n%s\n%s\n", msgSeparator, msgString, msgSeparator)
 	}
-	oldPersistentPostRun := res.PersistentPostRun
 	res.PersistentPostRun = func(cmd *cobra.Command, args []string) {
-		oldPersistentPostRun(cmd, args)
+		t, idx := internalCallStack.Peek()
+		if t == nil {
+			libutils.Fatal(1, "internal error: internal call stack is empty in PersistentPostRun\n")
+		}
+		msgString := fmt.Sprintf("=== Finished execution of call (index: %d): %s ===", idx, t.CommandArgs)
+		msgSeparator := strings.Repeat("=", len(msgString))
+		debug.Debug("\n%s\n%s\n%s\n", msgSeparator, msgString, msgSeparator)
+		debug.Debug("=== Starting potential internal call resulting from call at index %d ===", idx)
+		if err := handleInternalCall(); err != nil {
+			libutils.Fatal(1, "error handling internal call: %w\n", err)
+		}
+		debug.Debug("=== Finished potential internal call resulting from call at index %d ===", idx)
+
 		cmdGroupID := getCmdGroup(cmd)
 
+		// check if notification file exists
+		// if yes, store current config in history, write generic state, delete plugin state unless it was changed,
+		// copy temporary history to regular history, print notification
+
+		noteFound := false
+		_, err := fs.FS.Stat(config.Runtime.NotificationMessagePath())
+		if err != nil {
+			if !vfs.IsNotExist(err) {
+				libutils.Fatal(1, "error accessing notification message file: %w\n", err)
+			}
+			debug.Debug("No notification message file found, skipping state handling.")
+		} else {
+			noteFound = true
+			debug.Debug("Notification message file found.\n")
+		}
+
+		if noteFound {
+			if skipStateHandlingGroups.Has(cmdGroupID) {
+				debug.Debug("Skipping state handling because command belongs to group '%s'.\n", cmd.GroupID)
+			} else {
+				// write generic state
+				debug.Debug("Writing generic state to '%s'.\n", config.Runtime.GenericStatePath())
+				pluginName := strings.SplitN(t.CommandArgs, " ", 2)[0]
+				cmdExec := fmt.Sprintf("%s %s", os.Args[0], t.CommandArgs)
+				debug.Debug("\tExecuted command: %s\n", cmdExec)
+				debug.Debug("\tPlugin Name: %s\n", pluginName)
+				if err := state.WriteGenericState(config.Runtime.GenericStatePath(), cmdExec, pluginName); err != nil {
+					libutils.Fatal(1, "error writing generic state: %w\n", err)
+				}
+
+				// delete plugin state if it was not changed
+				if fi, err := fs.FS.Stat(config.Runtime.PluginStatePath()); err != nil {
+					if !vfs.IsNotExist(err) {
+						libutils.Fatal(1, "error accessing plugin state file: %w\n", err)
+					}
+					debug.Debug("Plugin state file does not exist.\n")
+				} else {
+					modTime := fi.ModTime()
+					debug.Debug("Plugin state file last modified: %s\n", modTime.Format(time.RFC3339))
+					if modTime.Equal(pluginStateLastModified) {
+						debug.Debug("Plugin state file was not changed, deleting it.\n")
+						if err := fs.FS.Remove(config.Runtime.PluginStatePath()); err != nil {
+							libutils.Fatal(1, "error deleting plugin state file: %w\n", err)
+						}
+					} else {
+						debug.Debug("Plugin state file was changed, keeping it.\n")
+					}
+				}
+			}
+		}
+
+		debug.Debug("=== Starting potential callback to call at index %d ===", idx)
+		if err := handleInternalCallback(t, idx); err != nil {
+			libutils.Fatal(1, "error handling internal callback: %w\n", err)
+		}
+		debug.Debug("=== Finished potential callback to call at index %d ===", idx)
+		if err := fs.FS.Remove(config.Runtime.InternalCallbackStatePath(strconv.Itoa(idx))); err == nil {
+			debug.Debug("Removed used internal callback state file for index %d", idx)
+		} else if !vfs.IsNotExist(err) {
+			libutils.Fatal(1, "error removing used internal callback state file for index %d: %w\n", idx, err)
+		}
+		if !options.isInternalCallback {
+			internalCallStack.Pop()
+		}
+		if options.isInternalCall || options.isInternalCallback {
+			return
+		}
 		if !skipKubeconfigWarningGroups.Has(cmdGroupID) {
 			// check if KUBECONFIG env var is set to the expected value and print a warning to stderr if not
 			kcfg_env, ok := os.LookupEnv("KUBECONFIG")
@@ -165,97 +240,56 @@ It is strongly discouraged to modify the kubeconfig that is managed by this tool
 			}
 		}
 
-		// if this is the outermost command, remove all leftover callback files
-		if len(internalCallStack) == 0 {
-			debug.Debug("Removing all leftover internal callback files.\n")
-			files, err := vfs.ReadDir(fs.FS, config.Runtime.SessionDir())
-			if err != nil {
-				libutils.Fatal(1, "error reading session directory: %w\n", err)
-			}
-			for _, file := range files {
-				if strings.HasPrefix(file.Name(), config.InternalCallbackFilePrefix) {
-					debug.Debug("Removing internal callback file: %s\n", file.Name())
-					if err := fs.FS.Remove(filepath.Join(config.Runtime.SessionDir(), file.Name())); err != nil {
-						libutils.Fatal(1, "error removing internal callback file: %w\n", err)
-					}
-				}
-			}
-		}
-
-		// check if notification file exists
-		// if yes, store current config in history, write generic state, delete plugin state unless it was changed,
-		// copy temporary history to regular history, print notification
-
-		note, err := vfs.ReadFile(fs.FS, config.Runtime.NotificationMessagePath())
+		debug.Debug("Removing all leftover internal callback files.\n")
+		files, err := vfs.ReadDir(fs.FS, config.Runtime.SessionDir())
 		if err != nil {
-			if vfs.IsNotExist(err) {
-				debug.Debug("No notification message file found.\n")
-				return
-			}
-			libutils.Fatal(1, "error accessing notification message file: %w\n", err)
+			libutils.Fatal(1, "error reading session directory: %w\n", err)
 		}
-		debug.Debug("Notification message file found.\n")
-
-		if skipStateHandlingGroups.Has(cmdGroupID) {
-			debug.Debug("Skipping state handling because command belongs to group '%s'.\n", cmd.GroupID)
-		} else {
-			// write generic state
-			debug.Debug("Writing generic state to '%s'.\n", config.Runtime.GenericStatePath())
-			con := config.Runtime.Context() // we need the context for the plugin name
-			pluginName := con.CurrentPluginName
-			if pluginName == "" {
-				pluginName = "<unknown>"
-			}
-			cmdExec := strings.Join(os.Args, " ")
-			debug.Debug("\tExecuted command: %s\n", cmdExec)
-			debug.Debug("\tPlugin Name: %s\n", pluginName)
-			if err := state.WriteGenericState(config.Runtime.GenericStatePath(), cmdExec, pluginName); err != nil {
-				libutils.Fatal(1, "error writing generic state: %w\n", err)
-			}
-
-			// delete plugin state if it was not changed
-			if fi, err := fs.FS.Stat(config.Runtime.PluginStatePath()); err != nil {
-				if !vfs.IsNotExist(err) {
-					libutils.Fatal(1, "error accessing plugin state file: %w\n", err)
+		for _, file := range files {
+			if strings.HasPrefix(file.Name(), config.InternalCallbackFilePrefix) {
+				debug.Debug("Removing internal callback file: %s\n", file.Name())
+				if err := fs.FS.Remove(filepath.Join(config.Runtime.SessionDir(), file.Name())); err != nil {
+					libutils.Fatal(1, "error removing internal callback file: %w\n", err)
 				}
-				debug.Debug("Plugin state file does not exist.\n")
-			} else {
-				modTime := fi.ModTime()
-				debug.Debug("Plugin state file last modified: %s\n", modTime.Format(time.RFC3339))
-				if modTime.Equal(pluginStateLastModified) {
-					debug.Debug("Plugin state file was not changed, deleting it.\n")
-					if err := fs.FS.Remove(config.Runtime.PluginStatePath()); err != nil {
-						libutils.Fatal(1, "error deleting plugin state file: %w\n", err)
+			}
+		}
+
+		if noteFound {
+			debug.Debug("History handling")
+			// copy current state to newest history entry
+			if err := storage.StoreFromCurrentToHistory(); err != nil {
+				libutils.Fatal(1, "error storing current state to history: %w\n", err)
+			}
+			// link from global history to local history
+			if err := storage.StoreFromLocalToGlobalHistory(); err != nil {
+				libutils.Fatal(1, "error storing local history entry to global history: %w\n", err)
+			}
+
+			// print notification, if enabled
+			if config.Runtime.Config().Kubeswitcher.PrintInfoOnKubeconfigChange {
+				note, err := vfs.ReadFile(fs.FS, config.Runtime.NotificationMessagePath())
+				if err != nil {
+					if vfs.IsNotExist(err) {
+						debug.Debug("No notification message file found.\n")
+						return
 					}
+					libutils.Fatal(1, "error accessing notification message file: %w\n", err)
+				}
+				if config.Runtime.Config().Kubeswitcher.PrintChangeInfoToStderr {
+					cmd.PrintErrln(string(note))
 				} else {
-					debug.Debug("Plugin state file was changed, keeping it.\n")
+					cmd.Println(string(note))
 				}
 			}
-		}
-
-		// copy current state to newest history entry
-		if err := storage.StoreFromCurrentToHistory(); err != nil {
-			libutils.Fatal(1, "error storing current state to history: %w\n", err)
-		}
-		// link from global history to local history
-		if err := storage.StoreFromLocalToGlobalHistory(); err != nil {
-			libutils.Fatal(1, "error storing local history entry to global history: %w\n", err)
-		}
-
-		// print notification, if enabled
-		if config.Runtime.Config().Kubeswitcher.PrintInfoOnKubeconfigChange {
-			if config.Runtime.Config().Kubeswitcher.PrintChangeInfoToStderr {
-				cmd.PrintErrln(string(note))
-			} else {
-				cmd.Println(string(note))
-			}
+		} else {
+			debug.Debug("No notification message file found, skipping history handling and notification printing.")
 		}
 	}
 
 	// flags
 	// persistent flags have to be parsed manually, since flag parsing has to be disabled for plugin subcommands
 	// so this is just for the help message
-	res.PersistentFlags().BoolVar(&debug.PrintDebugStatements, "debug", false, "Print debug information to stderr.")
+	res.PersistentFlags().BoolVar(&debug.PrintDebugStatements, "debug", debug.PrintDebugStatements, "Print debug information to stderr.")
 
 	return res
 }
@@ -317,7 +351,8 @@ func commandFromPluginConfig(pc *config.PluginConfig) *cobra.Command {
 				debug.Debug("  %s=%s\n", k, v)
 				bin.Env = append(bin.Env, fmt.Sprintf("%s=%s", k, v))
 			}
-			for k, v := range config.Runtime.Context().EnvFromContext(pc.Name, pc.Config, config.Runtime.InternalCallbackPath(strconv.Itoa(len(internalCallStack)))) { // add context env vars
+			currentTaskIndexAsString := strconv.Itoa(internalCallStack.CurrentTaskIndex())
+			for k, v := range config.Runtime.Context().EnvFromContext(pc.Name, pc.Config, config.Runtime.InternalCallbackRequestPath(currentTaskIndexAsString), config.Runtime.InternalCallbackStatePath(currentTaskIndexAsString)) { // add context env vars
 				debug.Debug("  %s=%s\n", k, v)
 				bin.Env = append(bin.Env, fmt.Sprintf("%s=%s", k, v))
 			}
@@ -344,71 +379,6 @@ func commandFromPluginConfig(pc *config.PluginConfig) *cobra.Command {
 	}
 }
 
-// handleInternalCall checks if an internal call was requested
-// If yes, it executes the internal call and, if a callback was requested, then the original command again.
-// Note that an internal call can request an internal call itself again, potentially leading to a stack of internal calls.
-func handleInternalCall(internalCallFilePath string) error {
-	internalCallRaw, err := vfs.ReadFile(fs.FS, internalCallFilePath)
-	if err != nil {
-		if vfs.IsNotExist(err) {
-			debug.Debug("No internal call file found.\n")
-			return nil
-		}
-		return fmt.Errorf("error accessing internal call file: %w", err)
-	}
-	if err := fs.FS.Remove(internalCallFilePath); err != nil {
-		return fmt.Errorf("error deleting internal call file '%s': %w", internalCallFilePath, err)
-	}
-	internalCall := strings.TrimSpace(string(internalCallRaw))
-	debug.Debug("Internal call: %s\n", internalCall)
-	// call internal command
-	internalCmd := NewKubeswitcherCommand()
-	internalCmd.SetArgs(strings.Split(internalCall, " "))
-	if err := internalCmd.Execute(); err != nil {
-		return fmt.Errorf("error executing internal call '%s': %w", internalCall, err)
-	}
-	// check for and execute callback
-	internalCallbackFilePath := config.Runtime.InternalCallbackPath(strconv.Itoa(len(internalCallStack)))
-	_, err = fs.FS.Stat(internalCallbackFilePath)
-	if err != nil {
-		if vfs.IsNotExist(err) {
-			debug.Debug("No internal callback file found.\n")
-			return nil
-		}
-		return fmt.Errorf("error accessing internal callback file: %w", err)
-	}
-	newArgs := strings.Split(internalCallStackPeek(), " ")
-	internalCmd = NewKubeswitcherCommand()
-	internalCmd.SetArgs(newArgs)
-	if err := internalCmd.Execute(); err != nil {
-		return fmt.Errorf("error executing internal callback '%s': %w", strings.Join(newArgs, " "), err)
-	}
-	return nil
-}
-
-func internalCallStackPush(call string) {
-	internalCallStack = append(internalCallStack, call)
-	debug.Debug("Push to internal call stack: %s\n", call)
-}
-
-func internalCallStackPop() string {
-	res := internalCallStackPeek()
-	if res != "" {
-		internalCallStack = internalCallStack[:len(internalCallStack)-1]
-	}
-	debug.Debug("Pop from internal call stack: %s\n", res)
-	return res
-}
-
-func internalCallStackPeek() string {
-	if len(internalCallStack) == 0 {
-		return ""
-	}
-	res := internalCallStack[len(internalCallStack)-1]
-	debug.Debug("Peek from internal call stack: %s\n", res)
-	return res
-}
-
 // getCmdGroup returns the group ID of the given command.
 // If the command itself doesn't have a group ID, it checks its parents recursively.
 func getCmdGroup(cmd *cobra.Command) string {
@@ -422,7 +392,9 @@ func getCmdGroup(cmd *cobra.Command) string {
 }
 
 type KubeswitcherCommandOptions struct {
-	pluginsDisabled bool
+	pluginsDisabled    bool
+	isInternalCall     bool
+	isInternalCallback bool
 }
 
 type KubeswitcherCommandOption interface {
@@ -435,4 +407,18 @@ var _ KubeswitcherCommandOption = DisablePlugins{}
 
 func (DisablePlugins) Apply(opts *KubeswitcherCommandOptions) {
 	opts.pluginsDisabled = true
+}
+
+type internalCallOption struct {
+	internal bool
+	callback bool
+}
+
+func internalCall(internal bool, callback bool) internalCallOption {
+	return internalCallOption{internal: internal, callback: callback}
+}
+
+func (o internalCallOption) Apply(opts *KubeswitcherCommandOptions) {
+	opts.isInternalCall = o.internal
+	opts.isInternalCallback = o.callback
 }

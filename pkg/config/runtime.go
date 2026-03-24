@@ -27,6 +27,8 @@ const (
 	IdFileName                        = "id"
 	InternalCallFileName              = "internal_call"
 	InternalCallbackFilePrefix        = "icb_"
+	InternalCallbackRequestSuffix     = "_request"
+	InternalCallbackStateSuffix       = "_state"
 )
 
 var (
@@ -107,9 +109,14 @@ func (kr *KubeswitcherRuntime) InternalCallPath() string {
 	return filepath.Join(kr.SessionDir(), InternalCallFileName)
 }
 
-// InternalCallbackPath returns the path to the file containing the internal callback
-func (kr *KubeswitcherRuntime) InternalCallbackPath(callbackID string) string {
-	return filepath.Join(kr.SessionDir(), InternalCallbackFilePrefix+callbackID)
+// InternalCallbackRequestPath returns the path where a request for an internal callback with the given ID can be placed
+func (kr *KubeswitcherRuntime) InternalCallbackRequestPath(callbackID string) string {
+	return filepath.Join(kr.SessionDir(), InternalCallbackFilePrefix+callbackID+InternalCallbackRequestSuffix)
+}
+
+// InternalCallbackStatePath returns the path where the state for an internal callback with the given ID can be read from
+func (kr *KubeswitcherRuntime) InternalCallbackStatePath(callbackID string) string {
+	return filepath.Join(kr.SessionDir(), InternalCallbackFilePrefix+callbackID+InternalCallbackStateSuffix)
 }
 
 // ConfigDirectory returns the path to the kubeswitcher config directory
@@ -150,6 +157,7 @@ func (kr *KubeswitcherRuntime) Context() *libcontext.Context {
 			kr.NotificationMessagePath(),
 			kr.IdPath(),
 			kr.InternalCallPath(),
+			"",
 			"",
 			"",
 			kr.SessionID(),
