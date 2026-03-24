@@ -15,7 +15,12 @@ or clone the repository and run
 task install
 ```
 
-This repository uses [task](https://taskfile.dev/) instead of `make`.
+> [!NOTE]
+> For technical reasons, `go install github.com/Diaphteiros/kw` works only for `latest` and release versions.
+> For specific commits, the tool has to be checked out and built manually via `task install`.
+
+> [!NOTE]
+> This project uses [task](https://taskfile.dev/) instead of `make`.
 
 ### The 'KUBECONFIG' Env Var
 
