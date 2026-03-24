@@ -6,16 +6,18 @@ Opposed to similar tools, e.g. [kubeswitch](https://github.com/danielfoehrKn/kub
 
 ## Installation
 
+### Homebrew
+
+```shell
+brew tap diaphteiros/kubeswitcher
+brew install kw
+```
+
+### Manual Build
 Clone the repository (including the submodule) and run
 ```shell
 task install
 ```
-or download one of the binaries attached to a release.
-
-> [!NOTE]
-> Unfortunately, `go install github.com/Diaphteiros/kw` does not work for this repository.
-> The reason is that the `go.mod` file contains a `replace` directive, which is not allowed for `go install`.
-> Due to golang's lack of support for nested go modules, it is also not possible to get rid of the `replace` directive without major drawbacks.
 
 > [!NOTE]
 > This project uses [task](https://taskfile.dev/) instead of `make`.
