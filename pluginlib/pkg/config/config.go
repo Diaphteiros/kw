@@ -30,20 +30,20 @@ type DefaultableAndValidatable interface {
 // - defaultConfig: The default config as []byte.
 func LoadConfig[T DefaultableAndValidatable](cfg T, configDir, configFileName string, defaultConfig []byte) error {
 	cfgPath := filepath.Join(configDir, configFileName)
-	debug.Debug("Loading config from '%s'.\n", cfgPath)
+	debug.Debug("Loading config from '%s'.", cfgPath)
 	data, err := vfs.ReadFile(fs.FS, cfgPath)
 	if err != nil {
 		if !vfs.IsNotExist(err) {
 			return fmt.Errorf("unable to read config file '%s': %w", cfgPath, err)
 		}
 		if defaultConfig != nil {
-			debug.Debug("No config file '%s' found, using default config.\n", configFileName)
+			debug.Debug("No config file '%s' found, using default config.", configFileName)
 			data = defaultConfig
 			if err := vfs.WriteFile(fs.FS, cfgPath, data, os.ModePerm); err != nil {
 				return fmt.Errorf("unable to write default config file '%s': %w", cfgPath, err)
 			}
 		} else {
-			debug.Debug("No default config file given, defaulting from Default() method.\n")
+			debug.Debug("No default config file given, defaulting from Default() method.")
 		}
 	}
 	if data != nil {

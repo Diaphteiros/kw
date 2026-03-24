@@ -71,7 +71,7 @@ If no index is specified, the history is shown and the user is prompted for an i
 func promptForHistoryIndex(hist storage.HistoryInventory) int {
 	_, elem, err := selector.New[*storage.HistoryEntry]().
 		WithPrompt("Choose a history index: ").
-		WithFatalOnAbort("no history index selected").
+		WithFatalOnAbort("no history index selected\n").
 		WithFatalOnError("error while selecting history index: %w\n").
 		From(hist, func(he *storage.HistoryEntry) string {
 			return he.String()

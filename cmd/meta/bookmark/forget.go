@@ -55,7 +55,7 @@ Note that the bookmarks are shared between all terminal sessions.`,
 		for _, name := range names {
 			debug.Debug("Deleting bookmark entry '%s'", name)
 			if err := fs.FS.RemoveAll(filepath.Join(sRoot, name)); err != nil {
-				libutils.Fatal(1, "error deleting bookmark entry '%s': %w", name, err)
+				libutils.Fatal(1, "error deleting bookmark entry '%s': %w\n", name, err)
 			}
 			cmd.Printf("Bookmark entry '%s' deleted.\n", name)
 		}

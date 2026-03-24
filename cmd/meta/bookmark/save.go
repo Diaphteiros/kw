@@ -49,7 +49,7 @@ func promptForBookmarkKey(cmd *cobra.Command) string {
 	r := bufio.NewReader(cmd.InOrStdin())
 	input, err := r.ReadString('\n')
 	if err != nil {
-		libutils.Fatal(1, "error while reading user input: %w", err)
+		libutils.Fatal(1, "error while reading user input: %w\n", err)
 	}
 	input = strings.TrimSuffix(input, "\n")
 	return input

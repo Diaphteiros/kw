@@ -102,8 +102,8 @@ It is strongly discouraged to modify the kubeconfig that is managed by this tool
 	res.DisableAutoGenTag = true
 	res.PersistentPreRun = func(cmd *cobra.Command, args []string) {
 		// print session dir and config as debug info
-		debug.Debug("Session dir: %s\n", config.Runtime.SessionDir())
-		debug.Debug("Config: \n%s\n", config.Runtime.Config().String())
+		debug.Debug("Session dir: %s", config.Runtime.SessionDir())
+		debug.Debug("Config: \n%s", config.Runtime.Config().String())
 
 		// store current config in temporary history
 		if err := storage.StoreToTmpHistory(); err != nil {
@@ -115,9 +115,9 @@ It is strongly discouraged to modify the kubeconfig that is managed by this tool
 			if !vfs.IsNotExist(err) {
 				libutils.Fatal(1, "error renaming notification message file: %w\n", err)
 			}
-			debug.Debug("Notification message file does not exist.\n")
+			debug.Debug("Notification message file does not exist.")
 		} else {
-			debug.Debug("Notification message file '%s' renamed to '%s'.\n", config.Runtime.NotificationMessagePath(), config.Runtime.NotificationMessageBackupPath())
+			debug.Debug("Notification message file '%s' renamed to '%s'.", config.Runtime.NotificationMessagePath(), config.Runtime.NotificationMessageBackupPath())
 		}
 
 		if !skipStateHandlingGroups.Has(getCmdGroup(cmd)) {
@@ -126,10 +126,10 @@ It is strongly discouraged to modify the kubeconfig that is managed by this tool
 				if !vfs.IsNotExist(err) {
 					libutils.Fatal(1, "error accessing plugin state file: %w\n", err)
 				}
-				debug.Debug("Plugin state file does not exist.\n")
+				debug.Debug("Plugin state file does not exist.")
 			} else {
 				pluginStateLastModified = fi.ModTime()
-				debug.Debug("Plugin state file last modified: %s\n", pluginStateLastModified.Format(time.RFC3339))
+				debug.Debug("Plugin state file last modified: %s", pluginStateLastModified.Format(time.RFC3339))
 			}
 		}
 
@@ -176,19 +176,19 @@ It is strongly discouraged to modify the kubeconfig that is managed by this tool
 			debug.Debug("No notification message file found, skipping state handling.")
 		} else {
 			noteFound = true
-			debug.Debug("Notification message file found.\n")
+			debug.Debug("Notification message file found.")
 		}
 
 		if noteFound {
 			if skipStateHandlingGroups.Has(cmdGroupID) {
-				debug.Debug("Skipping state handling because command belongs to group '%s'.\n", cmd.GroupID)
+				debug.Debug("Skipping state handling because command belongs to group '%s'.", cmd.GroupID)
 			} else {
 				// write generic state
-				debug.Debug("Writing generic state to '%s'.\n", config.Runtime.GenericStatePath())
+				debug.Debug("Writing generic state to '%s'.", config.Runtime.GenericStatePath())
 				pluginName := strings.SplitN(t.CommandArgs, " ", 2)[0]
 				cmdExec := fmt.Sprintf("%s %s", os.Args[0], t.CommandArgs)
-				debug.Debug("\tExecuted command: %s\n", cmdExec)
-				debug.Debug("\tPlugin Name: %s\n", pluginName)
+				debug.Debug("\tExecuted command: %s", cmdExec)
+				debug.Debug("\tPlugin Name: %s", pluginName)
 				if err := state.WriteGenericState(config.Runtime.GenericStatePath(), cmdExec, pluginName); err != nil {
 					libutils.Fatal(1, "error writing generic state: %w\n", err)
 				}
@@ -198,17 +198,17 @@ It is strongly discouraged to modify the kubeconfig that is managed by this tool
 					if !vfs.IsNotExist(err) {
 						libutils.Fatal(1, "error accessing plugin state file: %w\n", err)
 					}
-					debug.Debug("Plugin state file does not exist.\n")
+					debug.Debug("Plugin state file does not exist.")
 				} else {
 					modTime := fi.ModTime()
-					debug.Debug("Plugin state file last modified: %s\n", modTime.Format(time.RFC3339))
+					debug.Debug("Plugin state file last modified: %s", modTime.Format(time.RFC3339))
 					if modTime.Equal(pluginStateLastModified) {
-						debug.Debug("Plugin state file was not changed, deleting it.\n")
+						debug.Debug("Plugin state file was not changed, deleting it.")
 						if err := fs.FS.Remove(config.Runtime.PluginStatePath()); err != nil {
 							libutils.Fatal(1, "error deleting plugin state file: %w\n", err)
 						}
 					} else {
-						debug.Debug("Plugin state file was changed, keeping it.\n")
+						debug.Debug("Plugin state file was changed, keeping it.")
 					}
 				}
 			}
@@ -240,14 +240,14 @@ It is strongly discouraged to modify the kubeconfig that is managed by this tool
 			}
 		}
 
-		debug.Debug("Removing all leftover internal callback files.\n")
+		debug.Debug("Removing all leftover internal callback files.")
 		files, err := vfs.ReadDir(fs.FS, config.Runtime.SessionDir())
 		if err != nil {
 			libutils.Fatal(1, "error reading session directory: %w\n", err)
 		}
 		for _, file := range files {
 			if strings.HasPrefix(file.Name(), config.InternalCallbackFilePrefix) {
-				debug.Debug("Removing internal callback file: %s\n", file.Name())
+				debug.Debug("Removing internal callback file: %s", file.Name())
 				if err := fs.FS.Remove(filepath.Join(config.Runtime.SessionDir(), file.Name())); err != nil {
 					libutils.Fatal(1, "error removing internal callback file: %w\n", err)
 				}
@@ -270,7 +270,7 @@ It is strongly discouraged to modify the kubeconfig that is managed by this tool
 				note, err := vfs.ReadFile(fs.FS, config.Runtime.NotificationMessagePath())
 				if err != nil {
 					if vfs.IsNotExist(err) {
-						debug.Debug("No notification message file found.\n")
+						debug.Debug("No notification message file found.")
 						return
 					}
 					libutils.Fatal(1, "error accessing notification message file: %w\n", err)
@@ -338,7 +338,7 @@ func commandFromPluginConfig(pc *config.PluginConfig) *cobra.Command {
 		GroupID:            cmdgroups.Plugin,
 		Short:              pc.Short,
 		Run: func(cmd *cobra.Command, args []string) {
-			debug.Debug("executing plugin: %s %s\n", pc.Name, strings.Join(args, " "))
+			debug.Debug("executing plugin: %s %s", pc.Name, strings.Join(args, " "))
 			config.Runtime.Context().SetPluginName(pc.Name)
 			bin := exec.Command(pc.Binary, args...)
 			// build command environment
@@ -346,14 +346,14 @@ func commandFromPluginConfig(pc *config.PluginConfig) *cobra.Command {
 				bin.Env = []string{}
 			}
 			bin.Env = append(bin.Env, os.Environ()...) // add current env vars
-			debug.Debug("environment (in addition to parent process environment):\n")
+			debug.Debug("environment (in addition to parent process environment):")
 			for k, v := range pc.Env { // add custom env vars
-				debug.Debug("  %s=%s\n", k, v)
+				debug.Debug("  %s=%s", k, v)
 				bin.Env = append(bin.Env, fmt.Sprintf("%s=%s", k, v))
 			}
 			currentTaskIndexAsString := strconv.Itoa(internalCallStack.CurrentTaskIndex())
 			for k, v := range config.Runtime.Context().EnvFromContext(pc.Name, pc.Config, config.Runtime.InternalCallbackRequestPath(currentTaskIndexAsString), config.Runtime.InternalCallbackStatePath(currentTaskIndexAsString)) { // add context env vars
-				debug.Debug("  %s=%s\n", k, v)
+				debug.Debug("  %s=%s", k, v)
 				bin.Env = append(bin.Env, fmt.Sprintf("%s=%s", k, v))
 			}
 
@@ -363,10 +363,10 @@ func commandFromPluginConfig(pc *config.PluginConfig) *cobra.Command {
 			bin.Stdin = cmd.InOrStdin()
 
 			// run command
-			debug.Debug("starting plugin execution\n")
+			debug.Debug("starting plugin execution")
 			if err := bin.Run(); err != nil {
 				// plugin failed, try to restore state
-				debug.Debug("plugin execution failed\n")
+				debug.Debug("plugin execution failed")
 				debug.Debug("--- plugin fail ---")
 				err2 := storage.LoadFromTmpHistory()
 				if err2 != nil {
@@ -374,7 +374,7 @@ func commandFromPluginConfig(pc *config.PluginConfig) *cobra.Command {
 				}
 				libutils.Fatal(1, "error running plugin '%s': %w\n", pc.Name, errors.Join(err, err2))
 			}
-			debug.Debug("finished plugin execution\n")
+			debug.Debug("finished plugin execution")
 		},
 	}
 }

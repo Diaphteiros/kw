@@ -25,7 +25,7 @@ type State struct {
 
 // LoadState reads the state from the given files.
 func LoadState(genericStatePath, pluginStatePath string) (*State, error) {
-	debug.Debug("Loading state from '%s' and '%s'.\n", genericStatePath, pluginStatePath)
+	debug.Debug("Loading state from '%s' and '%s'.", genericStatePath, pluginStatePath)
 	s := &State{}
 	if err := loadState_helper(s, genericStatePath, pluginStatePath); err != nil {
 		return nil, fmt.Errorf("unable to load state: %w", err)
