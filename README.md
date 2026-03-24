@@ -6,18 +6,16 @@ Opposed to similar tools, e.g. [kubeswitch](https://github.com/danielfoehrKn/kub
 
 ## Installation
 
-To install the KubeSwitcher tool, simply run the following command
-```shell
-go install github.com/Diaphteiros/kw@latest
-```
-or clone the repository and run
+Clone the repository (including the submodule) and run
 ```shell
 task install
 ```
+or download one of the binaries attached to a release.
 
 > [!NOTE]
-> For technical reasons, `go install github.com/Diaphteiros/kw` works only for `latest` and release versions.
-> For specific commits, the tool has to be checked out and built manually via `task install`. Probably, `go work use . ./pluginlib` is required to be run before as well.
+> Unfortunately, `go install github.com/Diaphteiros/kw` does not work for this repository.
+> The reason is that the `go.mod` file contains a `replace` directive, which is not allowed for `go install`.
+> Due to golang's lack of support for nested go modules, it is also not possible to get rid of the `replace` directive without major drawbacks.
 
 > [!NOTE]
 > This project uses [task](https://taskfile.dev/) instead of `make`.
