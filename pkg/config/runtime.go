@@ -205,7 +205,7 @@ func (kr *KubeswitcherRuntime) getKubeswitcherConfigDirectory() error {
 }
 
 func (kr *KubeswitcherRuntime) loadConfig() error {
-	debug.Debug("Loading config.\n")
+	debug.Debug("Loading config.")
 	cfg, err := LoadConfig()
 	if err != nil {
 		return err
@@ -218,7 +218,7 @@ func (kr *KubeswitcherRuntime) loadConfig() error {
 }
 
 func (kr *KubeswitcherRuntime) loadState() error {
-	debug.Debug("Loading state.\n")
+	debug.Debug("Loading state.")
 	s, err := state.LoadState(kr.GenericStatePath(), kr.PluginStatePath())
 	if err != nil {
 		return err

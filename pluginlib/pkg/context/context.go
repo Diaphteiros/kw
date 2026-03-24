@@ -190,7 +190,7 @@ func (con *Context) SetPluginName(name string) {
 // The additional args are passed into fmt.Sprintf with the message for formatting.
 func (con *Context) WriteKubeconfig(kcfg []byte, message string, args ...any) error {
 	// write the kubeconfig
-	debug.Debug("Writing kubeconfig to %s\n", con.KubeconfigPath)
+	debug.Debug("Writing kubeconfig to %s", con.KubeconfigPath)
 	// removing file before in case it is a symlink
 	if err := fs.FS.Remove(con.KubeconfigPath); err != nil && !vfs.IsNotExist(err) {
 		return fmt.Errorf("unable to remove kubeconfig: %w", err)
@@ -205,7 +205,7 @@ func (con *Context) WriteKubeconfig(kcfg []byte, message string, args ...any) er
 
 func (con *Context) WriteKubeconfigSymlink(kcfgPath, message string, args ...any) error {
 	// write the kubeconfig
-	debug.Debug("Writing kubeconfig to %s\n", con.KubeconfigPath)
+	debug.Debug("Writing kubeconfig to %s", con.KubeconfigPath)
 	// removing file before in case it is a symlink
 	if err := fs.FS.Remove(con.KubeconfigPath); err != nil && !vfs.IsNotExist(err) {
 		return fmt.Errorf("unable to remove kubeconfig: %w", err)
@@ -242,7 +242,7 @@ func (con *Context) WritePluginState(ps any) error {
 	// write the plugin state
 	// check if state is given as a byte slice
 	if psb, ok := ps.([]byte); ok {
-		debug.Debug("Writing byte-slice plugin state to %s\n", con.PluginStatePath)
+		debug.Debug("Writing byte-slice plugin state to %s", con.PluginStatePath)
 		err := vfs.WriteFile(fs.FS, con.PluginStatePath, psb, os.ModePerm)
 		if err != nil {
 			return fmt.Errorf("unable to write plugin state: %w", err)
@@ -251,7 +251,7 @@ func (con *Context) WritePluginState(ps any) error {
 	}
 
 	// otherwise, marshal into json
-	debug.Debug("Writing object plugin state to %s\n", con.PluginStatePath)
+	debug.Debug("Writing object plugin state to %s", con.PluginStatePath)
 	psj, err := json.MarshalIndent(ps, "", "  ")
 	if err != nil {
 		return fmt.Errorf("unable to marshal plugin state into json: %w", err)
@@ -284,16 +284,16 @@ func (con *Context) WriteId(id string, args ...any) error {
 // If callback is not nil, the calling command will receive a callback after the internal call has been executed.
 // During the callback, the information written here can be read and used to react to the internal call.
 func (con *Context) WriteInternalCall(call string, callback []byte) error {
-	debug.Debug("Writing internal call to %s\n", con.InternalCallPath)
+	debug.Debug("Writing internal call to %s", con.InternalCallPath)
 	err := vfs.WriteFile(fs.FS, con.InternalCallPath, []byte(call), os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("unable to write internal call: %w", err)
 	}
 
 	if callback == nil {
-		debug.Debug("No internal callback to write\n")
+		debug.Debug("No internal callback to write")
 	} else {
-		debug.Debug("Writing internal callback to %s\n", con.InternalCallbackRequestPath)
+		debug.Debug("Writing internal callback to %s", con.InternalCallbackRequestPath)
 		err = vfs.WriteFile(fs.FS, con.InternalCallbackRequestPath, callback, os.ModePerm)
 		if err != nil {
 			return fmt.Errorf("unable to write internal callback: %w", err)
@@ -306,11 +306,11 @@ func (con *Context) WriteInternalCall(call string, callback []byte) error {
 // ReadInternalCallbackState reads the internal callback state file, if it exists, and returns its content as a byte slice.
 // If the file does not exist, it returns nil without an error.
 func (con *Context) ReadInternalCallbackState() ([]byte, error) {
-	debug.Debug("Reading internal callback state from %s\n", con.InternalCallbackStatePath)
+	debug.Debug("Reading internal callback state from %s", con.InternalCallbackStatePath)
 	data, err := vfs.ReadFile(fs.FS, con.InternalCallbackStatePath)
 	if err != nil {
 		if vfs.IsNotExist(err) {
-			debug.Debug("No internal callback state file found.\n")
+			debug.Debug("No internal callback state file found.")
 			return nil, nil
 		}
 		return nil, fmt.Errorf("unable to read internal callback state: %w", err)

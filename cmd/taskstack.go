@@ -70,7 +70,7 @@ func handleInternalCall() error {
 		if !vfs.IsNotExist(err) {
 			return fmt.Errorf("error accessing internal call file: %w", err)
 		}
-		debug.Debug("No internal call file found.\n")
+		debug.Debug("No internal call file found.")
 	} else {
 		if err := fs.FS.Remove(internalCallFilePath); err != nil {
 			return fmt.Errorf("error deleting internal call file '%s': %w", internalCallFilePath, err)
