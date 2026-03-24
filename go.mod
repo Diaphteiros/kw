@@ -5,7 +5,7 @@ go 1.25.7
 replace github.com/Diaphteiros/kw/pluginlib => ./pluginlib
 
 require (
-	github.com/Diaphteiros/kw/pluginlib v1.0.1
+	github.com/Diaphteiros/kw/pluginlib v1.1.0
 	github.com/atotto/clipboard v0.1.4
 	github.com/mandelsoft/vfs v0.4.4
 	github.com/spf13/cobra v1.10.1
