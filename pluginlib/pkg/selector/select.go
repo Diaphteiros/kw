@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strings"
 
 	fuzzy "github.com/ktr0731/go-fuzzyfinder"
 	"sigs.k8s.io/yaml"
@@ -17,13 +18,15 @@ type Selector[T any] struct {
 	keyFunc             func(elem T) string
 	data                []T
 	sortFunc            func(a, b T) int
+	sortByKeyWrappers   []func(func(a, b T) int) func(a, b T) int
 	fatalOnAbortMessage string
 	fatalOnErrorMessage string
 }
 
 func New[T any]() *Selector[T] {
 	return &Selector[T]{
-		fuzzyArgs: []fuzzy.Option{},
+		fuzzyArgs:         []fuzzy.Option{},
+		sortByKeyWrappers: nil,
 	}
 }
 
@@ -79,8 +82,24 @@ func (s *Selector[T]) WithYamlPreview() *Selector[T] {
 
 // WithSortFunc sets a sorting function which is applied to the data before displaying it in the fuzzy finder.
 // Works like the standard sorting logic, the function should return a negative number if a < b, a positive number if a > b and 0 if they are equal.
+// This is mutually exclusive with WithSortByKey and only the last one called will have an effect.
 func (s *Selector[T]) WithSortFunc(sortFunc func(a, b T) int) *Selector[T] {
 	s.sortFunc = sortFunc
+	s.sortByKeyWrappers = nil
+	return s
+}
+
+// WithSortByKey causes the selection options to be sorted alphabetically by their key (as returned by the key function set in the 'From' method).
+// Optionally, wrapper functions (which take a sorting function and return a sorting function) can be passed in, which will be applied to the sort-by-key sorting function in the specified order.
+// This package's 'Invert' function can for example be used as a wrapper to reverse the sorting order.
+// This is mutually exclusive with WithSortFunc and only the last one called will have an effect.
+func (s *Selector[T]) WithSortByKey(wrappers ...func(func(a, b T) int) func(a, b T) int) *Selector[T] {
+	if len(wrappers) == 0 {
+		s.sortByKeyWrappers = []func(func(a T, b T) int) func(a T, b T) int{}
+	} else {
+		s.sortByKeyWrappers = append(s.sortByKeyWrappers, wrappers...)
+	}
+	s.sortFunc = nil
 	return s
 }
 
@@ -107,6 +126,14 @@ func (s *Selector[T]) From(data []T, keyFunc func(elem T) string) *Selector[T] {
 	copy(s.data, data)
 	if s.sortFunc != nil {
 		slices.SortStableFunc(s.data, s.sortFunc)
+	} else if s.sortByKeyWrappers != nil {
+		sortFunc := func(a, b T) int {
+			return strings.Compare(keyFunc(a), keyFunc(b))
+		}
+		for _, wrap := range s.sortByKeyWrappers {
+			sortFunc = wrap(sortFunc)
+		}
+		slices.SortStableFunc(s.data, sortFunc)
 	}
 	s.keyFunc = keyFunc
 	s.getElem = func(idx int) T {
