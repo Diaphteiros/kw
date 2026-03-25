@@ -3,6 +3,7 @@ package selector
 import (
 	"errors"
 	"fmt"
+	"slices"
 
 	fuzzy "github.com/ktr0731/go-fuzzyfinder"
 	"sigs.k8s.io/yaml"
@@ -15,6 +16,7 @@ type Selector[T any] struct {
 	getElem             func(idx int) T
 	keyFunc             func(elem T) string
 	data                []T
+	sortFunc            func(a, b T) int
 	fatalOnAbortMessage string
 	fatalOnErrorMessage string
 }
@@ -75,6 +77,13 @@ func (s *Selector[T]) WithYamlPreview() *Selector[T] {
 	return s
 }
 
+// WithSortFunc sets a sorting function which is applied to the data before displaying it in the fuzzy finder.
+// Works like the standard sorting logic, the function should return a negative number if a < b, a positive number if a > b and 0 if they are equal.
+func (s *Selector[T]) WithSortFunc(sortFunc func(a, b T) int) *Selector[T] {
+	s.sortFunc = sortFunc
+	return s
+}
+
 // WithFatalOnAbort sets the message that is displayed when the user aborts the selection or does not select a valid entry.
 // If this is not empty, the Select method will fatal with this message when the user aborts the selection.
 func (s *Selector[T]) WithFatalOnAbort(msg string) *Selector[T] {
@@ -96,13 +105,16 @@ func (s *Selector[T]) WithFatalOnError(msg string) *Selector[T] {
 func (s *Selector[T]) From(data []T, keyFunc func(elem T) string) *Selector[T] {
 	s.data = make([]T, len(data))
 	copy(s.data, data)
+	if s.sortFunc != nil {
+		slices.SortStableFunc(s.data, s.sortFunc)
+	}
 	s.keyFunc = keyFunc
 	s.getElem = func(idx int) T {
-		if idx < 0 || idx >= len(data) {
+		if idx < 0 || idx >= len(s.data) {
 			var zero T
 			return zero
 		}
-		return data[idx]
+		return s.data[idx]
 	}
 	return s
 }
@@ -130,4 +142,17 @@ func (s *Selector[T]) Select() (int, T, error) {
 		}
 	}
 	return idx, s.getElem(idx), err
+}
+
+// Identity can be used as a key function argument to the selector's 'From' method.
+// It requires the generic type to be a string-like (which can be cast to a string) and simply returns the string itself as the key.
+func Identity[T ~string](raw T) string {
+	return string(raw)
+}
+
+// Invert wraps a sorting function and inverts its result, thereby reversing the sorting order.
+func Invert[T any](sortFunc func(a, b T) int) func(a, b T) int {
+	return func(a, b T) int {
+		return -sortFunc(a, b)
+	}
 }
