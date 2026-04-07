@@ -9,9 +9,8 @@ jobs:
   homebrew:
     uses: openmcp-project/build/.github/workflows/homebrew.lib.yaml@cli
     with:
-      app_id: ${{ vars.CI_APP_ID }}
       username: Diaphteiros
       tap: homebrew-kubeswitcher
       readme_table: true
     secrets:
-      app_private_key: ${{ secrets.CI_APP_KEY }}
+      token: ${{ secrets.HOMEBREW_KUBESWITCHER_TOKEN }}
