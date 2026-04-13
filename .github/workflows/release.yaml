@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   release_tag:
-    uses: openmcp-project/build/.github/workflows/release.lib.yaml@cli
+    uses: openmcp-project/build/.github/workflows/release.lib.yaml@main
     with:
       app_id: ${{ vars.CI_APP_ID }}
       is_cli: true
