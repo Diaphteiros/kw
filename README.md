@@ -140,5 +140,8 @@ The [contract documentation](docs/development/contract.md) describes the contrac
 | --- | --- |
 | [garden](https://github.com/Diaphteiros/kw_garden) | Switch to clusters of a Gardener landscape. |
 | [kind](https://github.com/Diaphteiros/kw_kind) | Switch to local kind clusters. |
+| [mcp](https://github.com/Diaphteiros/kw_mcp) | Switch between clusters of an [openMCP](https://github.com/openmcp-project/openmcp-operator) landscape (for operators). |
+| [mcpu](https://github.com/Diaphteiros/kw_mcpu) | Switch between clusters of an [openMCP](https://github.com/openmcp-project/openmcp-operator) landscape (for end-users). |
+
 
 
