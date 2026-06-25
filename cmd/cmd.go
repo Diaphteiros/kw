@@ -369,11 +369,27 @@ func commandFromPluginConfig(pc *config.PluginConfig) *cobra.Command {
 				// plugin failed, try to restore state
 				debug.Debug("plugin execution failed")
 				debug.Debug("--- plugin fail ---")
-				err2 := storage.LoadFromTmpHistory()
-				if err2 != nil {
-					err2 = fmt.Errorf("unable to restore previous state: %w", err2)
+				if err2 := storage.LoadFromTmpHistory(); err2 != nil {
+					err = errors.Join(err, fmt.Errorf("unable to restore previous state: %w", err2))
 				}
-				libutils.Fatal(1, "error running plugin '%s': %w\n", pc.Name, errors.Join(err, err2))
+
+				debug.Debug("Removing all leftover internal callback files.")
+				files, err2 := vfs.ReadDir(fs.FS, config.Runtime.SessionDir())
+				if err2 != nil {
+					err = errors.Join(err, fmt.Errorf("error reading session directory: %w", err2))
+				}
+				if err2 == nil {
+					for _, file := range files {
+						if strings.HasPrefix(file.Name(), config.InternalCallbackFilePrefix) {
+							debug.Debug("Removing internal callback file: %s", file.Name())
+							if err3 := fs.FS.Remove(filepath.Join(config.Runtime.SessionDir(), file.Name())); err3 != nil {
+								err = errors.Join(err, fmt.Errorf("error removing internal callback file '%s': %w", file.Name(), err3))
+							}
+						}
+					}
+				}
+
+				libutils.Fatal(1, "error running plugin '%s': %w\n", pc.Name, err)
 			}
 			debug.Debug("finished plugin execution")
 		},
