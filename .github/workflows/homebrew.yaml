@@ -7,7 +7,7 @@ on:
 
 jobs:
   homebrew:
-    uses: openmcp-project/build/.github/workflows/homebrew.lib.yaml@cli
+    uses: openmcp-project/build/.github/workflows/homebrew.lib.yaml@main
     with:
       username: Diaphteiros
       tap: homebrew-kubeswitcher
