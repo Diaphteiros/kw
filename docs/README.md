@@ -16,6 +16,7 @@
 - [kw bookmark view](reference/kw_bookmark_view.md)
 - [kw config](reference/kw_config.md)
 - [kw config path](reference/kw_config_path.md)
+- [kw config view](reference/kw_config_view.md)
 - [kw custom](reference/kw_custom.md)
 - [kw flip](reference/kw_flip.md)
 - [kw history](reference/kw_history.md)

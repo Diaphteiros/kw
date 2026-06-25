@@ -28,4 +28,5 @@ Directory and file (with default values) will be created when any kubeswitcher c
 
 * [kw](kw.md)	 - Quickly switch between multiple Kubernetes clusters
 * [kw config path](kw_config_path.md)	 - View the path of the kubeswitcher configuration file
+* [kw config view](kw_config_view.md)	 - View the kubeswitcher configuration file
 

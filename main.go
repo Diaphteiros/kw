@@ -21,6 +21,8 @@ func main() {
 		if err := os.Setenv(libcontext.ENV_VAR_DEBUG, "true"); err != nil {
 			panic(err)
 		}
+	}
+	if os.Getenv(libcontext.ENV_VAR_DEBUG) == "true" {
 		debug.PrintDebugStatements = true
 	}
 	cmd.RootCmd.SetArgs(args)
