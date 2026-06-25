@@ -105,9 +105,16 @@ It is strongly discouraged to modify the kubeconfig that is managed by this tool
 		debug.Debug("Session dir: %s", config.Runtime.SessionDir())
 		debug.Debug("Config: \n%s", config.Runtime.Config().String())
 
-		// store current config in temporary history
-		if err := storage.StoreToTmpHistory(); err != nil {
-			libutils.Fatal(1, "error storing current config in temporary history: %w\n", err)
+		t, idx := internalCallStack.Peek()
+		if t == nil {
+			// this should only happen during the initial call
+			debug.Debug("Adding initial call to internal call stack")
+			t, idx = internalCallStack.Push(newTask(fmt.Sprintf("%s %s", cmd.Name(), strings.Join(args, " "))))
+
+			// store current config in temporary history
+			if err := storage.StoreToTmpHistory(); err != nil {
+				libutils.Fatal(1, "error storing current config in temporary history: %w\n", err)
+			}
 		}
 
 		// rename notification message file to backup file, if it exists
@@ -133,12 +140,6 @@ It is strongly discouraged to modify the kubeconfig that is managed by this tool
 			}
 		}
 
-		t, idx := internalCallStack.Peek()
-		if t == nil {
-			// this should only happen during the initial call
-			debug.Debug("Adding initial call to internal call stack")
-			t, idx = internalCallStack.Push(newTask(fmt.Sprintf("%s %s", cmd.Name(), strings.Join(args, " "))))
-		}
 		expectedCommand := fmt.Sprintf("%s %s", cmd.Name(), strings.Join(args, " "))
 		if t.CommandArgs != expectedCommand {
 			libutils.Fatal(1, "internal error: command at index %d on internal call stack doesn't match the currently executed command\nExpected: '%s'\nActual: '%s'\n", idx, expectedCommand, t.CommandArgs)
