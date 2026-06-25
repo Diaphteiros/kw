@@ -24,4 +24,5 @@ Directory and file (with default values) will be created when any kubeswitcher c
 
 func init() {
 	ConfigCmd.AddCommand(configsubcommands.PathCmd)
+	ConfigCmd.AddCommand(configsubcommands.ViewCmd)
 }
