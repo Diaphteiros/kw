@@ -14,6 +14,7 @@
 - [kw bookmark load](reference/kw_bookmark_load.md)
 - [kw bookmark save](reference/kw_bookmark_save.md)
 - [kw bookmark view](reference/kw_bookmark_view.md)
+- [kw clear](reference/kw_clear.md)
 - [kw config](reference/kw_config.md)
 - [kw config path](reference/kw_config_path.md)
 - [kw config view](reference/kw_config_view.md)
