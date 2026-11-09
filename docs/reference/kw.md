@@ -33,6 +33,7 @@ It is strongly discouraged to modify the kubeconfig that is managed by this tool
 ### SEE ALSO
 
 * [kw bookmark](kw_bookmark.md)	 - Interact with the kubeconfig bookmarks
+* [kw clear](kw_clear.md)	 - Clear the current session's state
 * [kw config](kw_config.md)	 - Interact with the kubeswitcher configuration
 * [kw custom](kw_custom.md)	 - Switch to the kubeconfig at the specified path
 * [kw flip](kw_flip.md)	 - Flip the current configuration with the previously used one

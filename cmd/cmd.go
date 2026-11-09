@@ -41,6 +41,7 @@ var (
 		metacmd.InfoCmd,
 		metacmd.HistoryCmd,
 		metacmd.NamespaceCmd,
+		metacmd.ClearCmd,
 		configcmd.ConfigCmd,
 		misccmd.KubectlEnvCmd,
 		misccmd.PromptCmd,
@@ -244,7 +245,10 @@ It is strongly discouraged to modify the kubeconfig that is managed by this tool
 		debug.Debug("Removing all leftover internal callback files.")
 		files, err := vfs.ReadDir(fs.FS, config.Runtime.SessionDir())
 		if err != nil {
-			libutils.Fatal(1, "error reading session directory: %w\n", err)
+			if !vfs.IsNotExist(err) {
+				libutils.Fatal(1, "error reading session directory: %w\n", err)
+			}
+			files = nil
 		}
 		for _, file := range files {
 			if strings.HasPrefix(file.Name(), config.InternalCallbackFilePrefix) {
